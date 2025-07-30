@@ -121,8 +121,7 @@ footer a {
 
 span.date {
     font-style: italic;
-    color: dimgray;
-    font-family: Menlo, Monaco, "Courier New", monospace;
+    color: gray;
 }
 
 ul.page-list {
