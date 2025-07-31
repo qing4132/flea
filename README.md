@@ -39,7 +39,7 @@ my-blog/
     ├── recipes/
     │   ├── easy-sandwich.md
     │   └── quick-pasta.md
-    └── .draft/                         # folders startwith "." will be ignored
+    └──  draft/                         # optional – drafts
         └── soy-sauce-noodles.md
 ```
 
