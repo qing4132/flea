@@ -4,8 +4,6 @@
 
 Just write, then get your site.
 
-See [my personal blog](https://qing4132.pages.dev) as a demo.
-
 ## Quickstart
 
 Install dependencies:
@@ -71,4 +69,6 @@ date: 2025-07-30
 My first time in New York City was during a winter...
 ```
 
-These core rules cover most use cases. Additional features and detailed rules will be documented soon.
+These core rules cover most use cases.
+
+For a full guide and example article, see [this post](https://qing4132.pages.dev/projects/flea-a-minimal-static-site-generator) .
