@@ -86,7 +86,7 @@ def flea(blog_folder: Path):
         path: Path
 
     for folder in content.iterdir():
-        if folder.is_dir() and not folder.name.startswith("."):
+        if folder.is_dir() and not folder.name.startswith(".") and folder.name != "drafts":
             category = output / folder.name
             category.mkdir()
 
