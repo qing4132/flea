@@ -39,7 +39,7 @@ my-blog/
     ├── recipes/
     │   ├── easy-sandwich.md
     │   └── quick-pasta.md
-    └──  draft/                         # optional – drafts
+    └──  drafts/                         # optional – drafts
         └── soy-sauce-noodles.md
 ```
 
