@@ -71,4 +71,4 @@ My first time in New York City was during a winter...
 
 These core rules cover most use cases.
 
-For a full guide and example article, see [this post](https://qing4132.pages.dev/projects/flea-a-minimal-static-site-generator) .
+For a full guide and example article, see [this post](https://qing4132.pages.dev/others/flea-a-minimal-static-site-generator) .
