@@ -160,11 +160,6 @@ ul.tags li.tag ul {
         color: lightblue;
     }
 
-    mark {
-        color: lightgray;
-        background-color: darkgoldenrod;
-    }
-
     code {
         background-color: #646464;
     }
