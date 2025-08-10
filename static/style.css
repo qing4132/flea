@@ -69,6 +69,7 @@ img {
 
 img.fit {
     max-height: 660px;
+    max-width: 540px;
 }
 
 span.image-title {
