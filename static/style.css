@@ -129,7 +129,6 @@ pre code {
     display: block;
     background-color: var(--color-pre-code-bg-light);
     overflow-x: auto;
-    white-space: pre-wrap;
     margin: 0;
     border-radius: 8px;
     padding: 16px;
