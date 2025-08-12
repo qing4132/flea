@@ -55,28 +55,15 @@ def generate_base_html(blog_folder: Path):
         """
     )
 
-    config = frontmatter.loads(
-        (blog_folder / "content" / "index.md").read_text(encoding="utf-8")
-    ).metadata
+    config = frontmatter.loads((blog_folder / "content" / "index.md").read_text(encoding="utf-8")).metadata
 
-    base_html = base_html_template.replace(
-        "<!-- CONFIG: lang -->", config.get("lang", "en-US")
-    )
-    base_html = base_html.replace(
-        "<!-- CONFIG: author -->", config.get("author", "anonymous")
-    )
-    base_html = base_html.replace(
-        "<!-- CONFIG: title -->", config.get("title", "Untitled")
-    )
+    base_html = base_html_template.replace("<!-- CONFIG: lang -->", config.get("lang", "en-US"))
+    base_html = base_html.replace("<!-- CONFIG: author -->", config.get("author", "anonymous"))
+    base_html = base_html.replace("<!-- CONFIG: title -->", config.get("title", "Untitled"))
     if "footer" in config:
-        base_html = base_html.replace(
-            "<!-- CONFIG: footer -->", f'<footer>{config.get("footer")}</footer>'
-        )
+        base_html = base_html.replace("<!-- CONFIG: footer -->", f'<footer>{config.get("footer")}</footer>')
     if "nav" in config:
-        nav_html = "\n".join(
-            f'<a href="{list(item.values())[0]}">{list(item.keys())[0]}</a>'
-            for item in config["nav"]
-        )
+        nav_html = "\n".join(f'<a href="{list(item.values())[0]}">{list(item.keys())[0]}</a>' for item in config["nav"])
         base_html = base_html.replace("<!-- CONFIG: nav -->", nav_html)
 
     return base_html
@@ -99,23 +86,14 @@ def flea(blog_folder: Path):
         path: Path
 
     for folder in content.iterdir():
-        if (
-            folder.is_dir()
-            and not folder.name.startswith(".")
-            and folder.name != "drafts"
-        ):
+        if folder.is_dir() and not folder.name.startswith(".") and folder.name != "drafts":
             category = output / folder.name
             category.mkdir()
 
             entries = []
 
             for md_file in folder.iterdir():
-                if (
-                    md_file.is_file()
-                    and md_file.suffix == ".md"
-                    and not md_file.name.startswith(".")
-                    and md_file.name != "index.md"
-                ):
+                if md_file.is_file() and md_file.suffix == ".md" and not md_file.name.startswith(".") and md_file.name != "index.md":
                     post = frontmatter.loads(md_file.read_text(encoding="utf-8"))
 
                     post_title = post.metadata.get("title")
@@ -123,12 +101,8 @@ def flea(blog_folder: Path):
                     post_path = category / md_file.with_suffix(".html").name
                     entries.append(Entry(post_date, post_title, post_path))
 
-                    html = base_html.replace(
-                        "<!-- post-title -->", f"<h1>{post_title}</h1>"
-                    )
-                    html = re.sub(
-                        r"<title>.*?</title>", f"<title>{post_title}</title>", html
-                    )
+                    html = base_html.replace("<!-- post-title -->", f"<h1>{post_title}</h1>")
+                    html = re.sub(r"<title>.*?</title>", f"<title>{post_title}</title>", html)
                     html = html.replace(
                         "<!-- post-date -->",
                         f'<span class="date"><p>{post_date.strftime("%Y-%m-%d")}</p></span>',
@@ -144,9 +118,7 @@ def flea(blog_folder: Path):
                 f'<li><span class="date">{e.date.isoformat()}</span><a href="/{e.path.parent.name}/{e.path.name}">{e.title}</a></li>'
                 for e in sorted(entries, reverse=True)
             )
-            html = html.replace(
-                "<!-- entries -->", f'<ul class="page-list">\n{post_list}\n</ul>'
-            )
+            html = html.replace("<!-- entries -->", f'<ul class="page-list">\n{post_list}\n</ul>')
 
             folder_index = folder / "index.md"
             if folder_index.exists():
@@ -154,17 +126,11 @@ def flea(blog_folder: Path):
                     "<!-- post-content -->",
                     parse(folder_index.read_text(encoding="utf-8")),
                 )
-            (category / folder_index.with_suffix(".html").name).write_text(
-                html, encoding="utf-8"
-            )
+            (category / folder_index.with_suffix(".html").name).write_text(html, encoding="utf-8")
 
     html = base_html.replace(
         "<!-- post-content -->",
-        parse(
-            frontmatter.loads(
-                (content / "index.md").read_text(encoding="utf-8")
-            ).content
-        ),
+        parse(frontmatter.loads((content / "index.md").read_text(encoding="utf-8")).content),
     )
     (output / "index.html").write_text(html, encoding="utf-8")
 
