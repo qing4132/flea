@@ -124,6 +124,7 @@ code {
     font-family: Menlo, Monaco, "Courier New", monospace;
     font-size: small;
     background-color: var(--color-code-bg-light);
+    margin: 0 2px;
 }
 
 pre code {
