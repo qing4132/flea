@@ -4,8 +4,6 @@ import re
 import shutil
 import sys
 import textwrap
-from dataclasses import dataclass
-from datetime import date
 from pathlib import Path
 
 import frontmatter
@@ -14,11 +12,8 @@ import mistune
 
 class ImageRenderer(mistune.HTMLRenderer):
     def image(self, alt, url, title=None):
-        return (
-            f'<img src="{url}" alt="{title or ""}" title="{title or ""}"'
-            + (f' class="{alt}"' if alt else "")
-            + " />"
-            + (f'<span class="image-title">{title}</span>' if title else "")
+        return f'<img src="{url}" alt="{title or ""}" title="{title or ""}"{" class=" + alt if alt else ""} />' + (
+            f'<span class="image-title">{title}</span>' if title else ""
         )
 
 
@@ -79,12 +74,6 @@ def flea(blog_folder: Path):
 
     base_html = generate_base_html(blog_folder)
 
-    @dataclass(order=True)
-    class Entry:
-        date: date
-        title: str
-        path: Path
-
     for folder in content.iterdir():
         if folder.is_dir() and not folder.name.startswith(".") and folder.name != "drafts":
             category = output / folder.name
@@ -97,16 +86,13 @@ def flea(blog_folder: Path):
                     post = frontmatter.loads(md_file.read_text(encoding="utf-8"))
 
                     post_title = post.metadata.get("title")
-                    post_date = post.metadata.get("date")
+                    post_date = post.metadata.get("date") or post.metadata.get("updated")
                     post_path = category / md_file.with_suffix(".html").name
-                    entries.append(Entry(post_date, post_title, post_path))
+                    entries.append((post_title, post_date, post_path))
 
                     html = base_html.replace("<!-- post-title -->", f"<h1>{post_title}</h1>")
                     html = re.sub(r"<title>.*?</title>", f"<title>{post_title}</title>", html)
-                    html = html.replace(
-                        "<!-- post-date -->",
-                        f'<span class="date"><p>{post_date.strftime("%Y-%m-%d")}</p></span>',
-                    )
+                    html = html.replace("<!-- post-date -->", f'<span class="date"><p>{post_date.strftime("%Y-%m-%d")}</p></span>')
                     html = html.replace("<!-- post-content -->", parse(post.content))
 
                     post_path.write_text(html, encoding="utf-8")
@@ -115,23 +101,17 @@ def flea(blog_folder: Path):
             html = re.sub(r"<title>.*?</title>", f"<title>{folder.name}/</title>", html)
 
             post_list = "\n".join(
-                f'<li><span class="date">{e.date.isoformat()}</span><a href="/{e.path.parent.name}/{e.path.name}">{e.title}</a></li>'
-                for e in sorted(entries, reverse=True)
+                f'<li><span class="date">{e[1].isoformat()}</span><a href="/{e[2].parent.name}/{e[2].name}">{e[0]}</a></li>'
+                for e in sorted(entries, key=lambda e: e[1], reverse=True)
             )
             html = html.replace("<!-- entries -->", f'<ul class="page-list">\n{post_list}\n</ul>')
 
             folder_index = folder / "index.md"
             if folder_index.exists():
-                html = html.replace(
-                    "<!-- post-content -->",
-                    parse(folder_index.read_text(encoding="utf-8")),
-                )
+                html = html.replace("<!-- post-content -->", parse(folder_index.read_text(encoding="utf-8")))
             (category / folder_index.with_suffix(".html").name).write_text(html, encoding="utf-8")
 
-    html = base_html.replace(
-        "<!-- post-content -->",
-        parse(frontmatter.loads((content / "index.md").read_text(encoding="utf-8")).content),
-    )
+    html = base_html.replace("<!-- post-content -->", parse(frontmatter.loads((content / "index.md").read_text(encoding="utf-8")).content))
     (output / "index.html").write_text(html, encoding="utf-8")
 
 
