@@ -56,7 +56,7 @@ def generate_base_html(blog_folder: Path):
     base_html = base_html.replace("<!-- CONFIG: author -->", config.get("author", "anonymous"))
     base_html = base_html.replace("<!-- CONFIG: title -->", config.get("title", "Untitled"))
     if "footer" in config:
-        base_html = base_html.replace("<!-- CONFIG: footer -->", f'<footer>{config.get("footer")}</footer>')
+        base_html = base_html.replace("<!-- CONFIG: footer -->", f'<footer>{config["footer"]}</footer>')
     if "nav" in config:
         nav_html = "\n".join(f'<a href="{list(item.values())[0]}">{list(item.keys())[0]}</a>' for item in config["nav"])
         base_html = base_html.replace("<!-- CONFIG: nav -->", nav_html)
