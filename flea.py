@@ -86,7 +86,7 @@ def flea(blog_folder: Path):
                     post = frontmatter.loads(md_file.read_text(encoding="utf-8"))
 
                     post_title = post.metadata.get("title")
-                    post_date = post.metadata.get("date") or post.metadata.get("updated")
+                    post_date = post.metadata.get("date")
                     post_path = category / md_file.with_suffix(".html").name
                     entries.append((post_title, post_date, post_path))
 
@@ -109,7 +109,7 @@ def flea(blog_folder: Path):
             folder_index = folder / "index.md"
             if folder_index.exists():
                 html = html.replace("<!-- post-content -->", parse(folder_index.read_text(encoding="utf-8")))
-            (category / folder_index.with_suffix(".html").name).write_text(html, encoding="utf-8")
+            (category / "index.html").write_text(html, encoding="utf-8")
 
     html = base_html.replace("<!-- post-content -->", parse(frontmatter.loads((content / "index.md").read_text(encoding="utf-8")).content))
     (output / "index.html").write_text(html, encoding="utf-8")
