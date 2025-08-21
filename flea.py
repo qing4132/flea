@@ -12,9 +12,7 @@ import mistune
 
 class ImageRenderer(mistune.HTMLRenderer):
     def image(self, alt, url, title=None):
-        return f'<img src="{url}" alt="{title or ""}" title="{title or ""}"{" class=" + alt if alt else ""} />' + (
-            f'<span class="image-title">{title}</span>' if title else ""
-        )
+        return f'<img src="{url}" alt=""{" class=" + alt if alt else ""} />' + (f'<span class="image-title">{title}</span>' if title else "")
 
 
 parse = mistune.create_markdown(renderer=ImageRenderer())
