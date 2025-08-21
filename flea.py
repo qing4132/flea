@@ -1,4 +1,4 @@
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 
 import re
 import shutil
@@ -15,10 +15,7 @@ class ImageRenderer(mistune.HTMLRenderer):
         return f'<img src="{url}" alt=""{" class=" + alt if alt else ""} />' + (f'<span class="image-title">{title}</span>' if title else "")
 
 
-parse = mistune.create_markdown(renderer=ImageRenderer())
-
-
-def generate_base_html(blog_folder: Path):
+def generate_base_html(config):
     base_html_template = textwrap.dedent(
         """\
         <!DOCTYPE html>
@@ -48,8 +45,6 @@ def generate_base_html(blog_folder: Path):
         """
     )
 
-    config = frontmatter.loads((blog_folder / "content" / "index.md").read_text(encoding="utf-8")).metadata
-
     base_html = base_html_template.replace("<!-- CONFIG: lang -->", config.get("lang", "en-US"))
     base_html = base_html.replace("<!-- CONFIG: author -->", config.get("author", "anonymous"))
     base_html = base_html.replace("<!-- CONFIG: title -->", config.get("title", "Untitled"))
@@ -70,7 +65,11 @@ def flea(blog_folder: Path):
     output.mkdir()
     shutil.copytree(Path(__file__).parent / "static", output / "static")
 
-    base_html = generate_base_html(blog_folder)
+    parse = mistune.create_markdown(renderer=ImageRenderer())
+
+    index = frontmatter.loads((content / "index.md").read_text(encoding="utf-8"))
+    base_html = generate_base_html(index.metadata)
+    (output / "index.html").write_text(base_html.replace("<!-- post-content -->", parse(index.content)), encoding="utf-8")
 
     for folder in content.iterdir():
         if folder.is_dir() and not folder.name.startswith(".") and folder.name != "drafts":
@@ -107,10 +106,8 @@ def flea(blog_folder: Path):
             folder_index = folder / "index.md"
             if folder_index.exists():
                 html = html.replace("<!-- post-content -->", parse(folder_index.read_text(encoding="utf-8")))
-            (category / "index.html").write_text(html, encoding="utf-8")
 
-    html = base_html.replace("<!-- post-content -->", parse(frontmatter.loads((content / "index.md").read_text(encoding="utf-8")).content))
-    (output / "index.html").write_text(html, encoding="utf-8")
+            (category / "index.html").write_text(html, encoding="utf-8")
 
 
 if __name__ == "__main__":
