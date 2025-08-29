@@ -162,20 +162,20 @@ span.date {
     color: var(--color-date-light);
 }
 
-ul.page-list {
+ul.entries {
     list-style-type: none;
     padding: unset;
 }
 
-ul.page-list li {
+ul.entries li {
     display: flex;
 }
 
-ul.page-list li span {
+ul.entries li span {
     flex: 0 0 132px;
 }
 
-ul.page-list li a:visited {
+ul.entries li a:visited {
     color: var(--color-link-visited-light);
 }
 
@@ -213,7 +213,7 @@ ul.page-list li a:visited {
         color: var(--color-date-dark);
     }
 
-    ul.page-list li a:visited {
+    ul.entries li a:visited {
         color: var(--color-link-visited-dark);
     }
 }

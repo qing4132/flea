@@ -1,9 +1,7 @@
-__version__ = "0.2.6"
+__version__ = "0.3.0"
 
-import re
 import shutil
 import sys
-import textwrap
 from pathlib import Path
 
 import frontmatter
@@ -12,102 +10,87 @@ import mistune
 
 class ImageRenderer(mistune.HTMLRenderer):
     def image(self, alt, url, title=None):
-        return f'<img src="{url}" alt=""{" class=" + alt if alt else ""} />' + (f'<span class="image-title">{title}</span>' if title else "")
-
-
-def generate_base_html(config):
-    base_html_template = textwrap.dedent(
-        """\
-        <!DOCTYPE html>
-        <html lang="<!-- CONFIG: lang -->">
-        <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="author" content="<!-- CONFIG: author -->">
-        <link rel="icon" href="/static/favicon.png" type="image/png">
-        <link rel="stylesheet" href="/static/style.css" type="text/css" />
-        <title><!-- CONFIG: title --></title>
-        </head>
-        <body>
-        <div id="top"></div>
-        <header>
-        <h2><!-- CONFIG: title --></h2>
-        <!-- CONFIG: nav -->
-        </header>
-        <main>
-        <!-- post-title -->
-        <!-- post-date -->
-        <!-- post-content --><!-- entries -->
-        </main>
-        <!-- CONFIG: footer -->
-        </body>
-        </html>
-        """
-    )
-
-    base_html = base_html_template.replace("<!-- CONFIG: lang -->", config.get("lang", "en-US"))
-    base_html = base_html.replace("<!-- CONFIG: author -->", config.get("author", "anonymous"))
-    base_html = base_html.replace("<!-- CONFIG: title -->", config.get("title", "Untitled"))
-    if "footer" in config:
-        base_html = base_html.replace("<!-- CONFIG: footer -->", f'<footer>{config["footer"]}</footer>')
-    if "nav" in config:
-        nav_html = "\n".join(f'<a href="{list(item.values())[0]}">{list(item.keys())[0]}</a>' for item in config["nav"])
-        base_html = base_html.replace("<!-- CONFIG: nav -->", nav_html)
-
-    return base_html
+        class_attribute = f' class="{alt}"' if alt else ""
+        title_span = f'<span class="image-title">{title}</span>' if title else ""
+        return f'<img src="{url}" alt=""{class_attribute} />{title_span}'
 
 
 def flea(blog_folder: Path):
-    content, output = blog_folder / "content", blog_folder / "output"
-
-    if output.exists():
-        shutil.rmtree(output)
-    output.mkdir()
-    shutil.copytree(Path(__file__).parent / "static", output / "static")
-
     parse = mistune.create_markdown(renderer=ImageRenderer())
 
-    index = frontmatter.loads((content / "index.md").read_text(encoding="utf-8"))
-    base_html = generate_base_html(index.metadata)
-    (output / "index.html").write_text(base_html.replace("<!-- post-content -->", parse(index.content)), encoding="utf-8")
+    content = blog_folder / "content"
+    public = blog_folder / "public"
+
+    if public.exists():
+        shutil.rmtree(public)
+    shutil.copytree(Path(__file__).parent / "public", public)
+
+    config, index_content = frontmatter.parse((content / "index.md").read_text(encoding="utf-8"))
+
+    base_html = f"""\
+        <!DOCTYPE html>
+        <html lang="{config.get('lang','en-US')}">
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <meta name="author" content="{config.get('author', 'anonymous')}">
+            <link rel="icon" href="/static/favicon.png" type="image/png">
+            <link rel="stylesheet" href="/static/style.css" type="text/css" />
+            <!-- $titlebar -->
+        </head>
+        <body>
+            <div id="top"></div>
+            <header>
+                <h2>{config.get('title', 'Untitled')}</h2>
+                {"".join(f'<a href="{url}">{category}</a>' for category, url in config.get("nav", {}).items())}
+            </header>
+            <main>
+                <!-- $title -->
+                <!-- $date -->
+                <!-- $content -->
+                <!-- $entries -->
+            </main>
+            <footer>{config.get('footer','')}</footer>
+        </body>
+        </html>"""
+
+    def render(path: Path, titlebar, title=None, date=None, content=None, entries=None):
+        path.write_text(
+            base_html.replace("<!-- $titlebar -->", f"<title>{titlebar}</title>")
+            .replace("<!-- $title -->", f"<h1>{title}</h1>" if title else "")
+            .replace("<!-- $date -->", f'<span class="date"><p>{date.isoformat()}</p></span>' if date else "")
+            .replace("<!-- $content -->", parse(content) if content else "")
+            .replace("<!-- $entries -->", f'<ul class="entries">{entries}</ul>' if entries else ""),
+            encoding="utf-8",
+        )
+
+    render(public / "index.html", config.get("title", "Untitled"), content=index_content)
 
     for folder in content.iterdir():
-        if folder.is_dir() and not folder.name.startswith(".") and folder.name != "drafts":
-            category = output / folder.name
+        if folder.is_dir() and not folder.name.startswith(".") and folder.name != "static" and folder.name != "drafts":
+            category = public / folder.name
             category.mkdir()
 
-            entries = []
+            post_list = []
 
             for md_file in folder.iterdir():
                 if md_file.is_file() and md_file.suffix == ".md" and not md_file.name.startswith(".") and md_file.name != "index.md":
-                    post = frontmatter.loads(md_file.read_text(encoding="utf-8"))
+                    post_metadata, post_content = frontmatter.parse(md_file.read_text(encoding="utf-8"))
 
-                    post_title = post.metadata.get("title")
-                    post_date = post.metadata.get("date")
+                    post_title = post_metadata.get("title")
+                    post_date = post_metadata.get("date")
                     post_path = category / md_file.with_suffix(".html").name
-                    entries.append((post_title, post_date, post_path))
+                    post_list.append((post_title, post_date, post_path))
 
-                    html = base_html.replace("<!-- post-title -->", f"<h1>{post_title}</h1>")
-                    html = re.sub(r"<title>.*?</title>", f"<title>{post_title}</title>", html)
-                    html = html.replace("<!-- post-date -->", f'<span class="date"><p>{post_date.strftime("%Y-%m-%d")}</p></span>')
-                    html = html.replace("<!-- post-content -->", parse(post.content))
+                    render(post_path, post_title, title=post_title, date=post_date, content=post_content)
 
-                    post_path.write_text(html, encoding="utf-8")
+                category_index_content = (folder / "index.md").read_text(encoding="utf-8") if (folder / "index.md").exists() else None
+                entries = "".join(
+                    f'<li><span class="date">{p[1].isoformat()}</span><a href="/{p[2].parent.name}/{p[2].name}">{p[0]}</a></li>'
+                    for p in sorted(post_list, key=lambda p: p[1], reverse=True)
+                )
 
-            html = base_html.replace("<!-- post-title -->", f"<h1>{folder.name}/</h1>")
-            html = re.sub(r"<title>.*?</title>", f"<title>{folder.name}/</title>", html)
-
-            post_list = "\n".join(
-                f'<li><span class="date">{e[1].isoformat()}</span><a href="/{e[2].parent.name}/{e[2].name}">{e[0]}</a></li>'
-                for e in sorted(entries, key=lambda e: e[1], reverse=True)
-            )
-            html = html.replace("<!-- entries -->", f'<ul class="page-list">\n{post_list}\n</ul>')
-
-            folder_index = folder / "index.md"
-            if folder_index.exists():
-                html = html.replace("<!-- post-content -->", parse(folder_index.read_text(encoding="utf-8")))
-
-            (category / "index.html").write_text(html, encoding="utf-8")
+                render(category / "index.html", f"{folder.name}/", title=f"{folder.name}/", content=category_index_content, entries=entries)
 
 
 if __name__ == "__main__":
