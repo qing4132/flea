@@ -84,13 +84,13 @@ def flea(blog_folder: Path):
 
                     render(post_path, post_title, title=post_title, date=post_date, content=post_content)
 
-                category_index_content = (folder / "index.md").read_text(encoding="utf-8") if (folder / "index.md").exists() else None
-                entries = "".join(
-                    f'<li><span class="date">{p[1].isoformat()}</span><a href="/{p[2].parent.name}/{p[2].name}">{p[0]}</a></li>'
-                    for p in sorted(post_list, key=lambda p: p[1], reverse=True)
-                )
+            category_index_content = (folder / "index.md").read_text(encoding="utf-8") if (folder / "index.md").exists() else None
+            entries = "".join(
+                f'<li><span class="date">{p[1].isoformat()}</span><a href="/{p[2].parent.name}/{p[2].name}">{p[0]}</a></li>'
+                for p in sorted(post_list, key=lambda p: p[1], reverse=True)
+            )
 
-                render(category / "index.html", f"{folder.name}/", title=f"{folder.name}/", content=category_index_content, entries=entries)
+            render(category / "index.html", f"{folder.name}/", title=f"{folder.name}/", content=category_index_content, entries=entries)
 
 
 if __name__ == "__main__":
