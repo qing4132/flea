@@ -15,14 +15,11 @@ class ImageRenderer(mistune.HTMLRenderer):
         return f'<img src="{url}" alt=""{class_attribute} />{title_span}'
 
 
-def flea(blog_folder: Path):
+def flea(root: Path):
     parse = mistune.create_markdown(renderer=ImageRenderer())
 
-    content = blog_folder / "content"
-    public = blog_folder / "public"
-
-    if public.exists():
-        shutil.rmtree(public)
+    content, public = root / "content", root / "public"
+    shutil.rmtree(public) if public.exists() else None
     shutil.copytree(Path(__file__).parent / "public", public)
 
     config, index_content = frontmatter.parse((content / "index.md").read_text(encoding="utf-8"))
@@ -42,7 +39,7 @@ def flea(blog_folder: Path):
             <div id="top"></div>
             <header>
                 <h2>{config.get('title', 'Untitled')}</h2>
-                {"".join(f'<a href="{url}">{category}</a>' for category, url in config.get("nav", {}).items())}
+                {"".join(f'<a href="{url}">{cat}</a>' for cat, url in config.get("nav", {}).items())}
             </header>
             <main>
                 <!-- $title -->
@@ -66,31 +63,32 @@ def flea(blog_folder: Path):
 
     render(public / "index.html", config.get("title", "Untitled"), content=index_content)
 
-    for folder in content.iterdir():
-        if folder.is_dir() and not folder.name.startswith(".") and folder.name != "static" and folder.name != "drafts":
-            category = public / folder.name
-            category.mkdir()
+    for d in content.iterdir():
+        if d.is_dir() and not d.name.startswith(".") and d.name not in {"static", "drafts"}:
+            cat = public / d.name
+            cat.mkdir()
 
-            post_list = []
+            posts = []
 
-            for md_file in folder.iterdir():
-                if md_file.is_file() and md_file.suffix == ".md" and not md_file.name.startswith(".") and md_file.name != "index.md":
-                    post_metadata, post_content = frontmatter.parse(md_file.read_text(encoding="utf-8"))
+            for f in d.iterdir():
+                if f.is_file() and f.suffix == ".md" and not f.name.startswith(".") and f.name != "index.md":
+                    post_metadata, post_content = frontmatter.parse(f.read_text(encoding="utf-8"))
 
                     post_title = post_metadata.get("title")
                     post_date = post_metadata.get("date")
-                    post_path = category / md_file.with_suffix(".html").name
-                    post_list.append((post_title, post_date, post_path))
+                    post_path = cat / f.with_suffix(".html").name
+                    posts.append((post_title, post_date, post_path))
 
                     render(post_path, post_title, title=post_title, date=post_date, content=post_content)
 
-            category_index_content = (folder / "index.md").read_text(encoding="utf-8") if (folder / "index.md").exists() else None
+            cat_index_content = (d / "index.md").read_text(encoding="utf-8") if (d / "index.md").exists() else None
             entries = "".join(
-                f'<li><span class="date">{p[1].isoformat()}</span><a href="/{p[2].parent.name}/{p[2].name}">{p[0]}</a></li>'
-                for p in sorted(post_list, key=lambda p: p[1], reverse=True)
+                f'<li><span class="date">{date.isoformat()}</span>'
+                f'<a href="/{path.parent.name}/{path.name}">{title}</a></li>'
+                for title, date, path in sorted(posts, key=lambda p: p[1], reverse=True)
             )
 
-            render(category / "index.html", f"{folder.name}/", title=f"{folder.name}/", content=category_index_content, entries=entries)
+            render(cat / "index.html", f"{d.name}/", title=f"{d.name}/", content=cat_index_content, entries=entries)
 
 
 if __name__ == "__main__":
