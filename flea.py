@@ -1,4 +1,4 @@
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 import shutil
 import sys
@@ -10,19 +10,19 @@ import mistune
 
 class ImageRenderer(mistune.HTMLRenderer):
     def image(self, alt, url, title=None):
-        class_attribute = f' class="{alt}"' if alt else ""
+        class_attr = f' class="{alt}"' if alt else ""
         title_span = f'<span class="image-title">{title}</span>' if title else ""
-        return f'<img src="{url}" alt=""{class_attribute} />{title_span}'
+        return f'<img src="{url}" alt=""{class_attr} />{title_span}'
 
 
 def flea(root: Path):
     parse = mistune.create_markdown(renderer=ImageRenderer())
 
-    content, public = root / "content", root / "public"
-    shutil.rmtree(public) if public.exists() else None
-    shutil.copytree(Path(__file__).parent / "public", public)
+    src, dst = root / "content", root / "public"
+    shutil.rmtree(dst) if dst.exists() else None
+    shutil.copytree(Path(__file__).parent / "public", dst)
 
-    config, index_content = frontmatter.parse((content / "index.md").read_text(encoding="utf-8"))
+    config, index_content = frontmatter.parse((src / "index.md").read_text(encoding="utf-8"))
 
     base_html = f"""\
         <!DOCTYPE html>
@@ -61,11 +61,11 @@ def flea(root: Path):
             encoding="utf-8",
         )
 
-    render(public / "index.html", config.get("title", "Untitled"), content=index_content)
+    render(dst / "index.html", config.get("title", "Untitled"), content=index_content)
 
-    for d in content.iterdir():
+    for d in src.iterdir():
         if d.is_dir() and not d.name.startswith(".") and d.name not in {"static", "drafts"}:
-            cat = public / d.name
+            cat = dst / d.name
             cat.mkdir()
 
             posts = []
