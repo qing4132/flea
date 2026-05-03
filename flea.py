@@ -1,4 +1,4 @@
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 import shutil
 import sys
@@ -31,7 +31,7 @@ def flea(root: Path):
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <meta name="author" content="{config.get('author', 'anonymous')}">
-            <link rel="icon" href="/static/favicon.png" type="image/png">
+            <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
             <link rel="stylesheet" href="/static/style.css" type="text/css" />
             <!-- $titlebar -->
         </head>
